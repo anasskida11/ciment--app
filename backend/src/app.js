@@ -42,7 +42,8 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
     }
   },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false
 }));
 
 // Configuration CORS - Permettre toutes les origines en développement
@@ -66,6 +67,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight requests
 
 // Rate limiting
 const generalLimiter = rateLimit({

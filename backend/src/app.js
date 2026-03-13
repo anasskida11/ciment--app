@@ -69,7 +69,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle preflight requests
 
 // Rate limiting
 const generalLimiter = rateLimit({

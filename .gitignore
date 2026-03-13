@@ -42,3 +42,7 @@ Thumbs.db
 
 # Runtime artifacts
 generated/
+
+# Generated backend PDFs (keep folders, ignore files)
+backend/assets/pdfs/*.pdf
+backend/src/assets/pdfs/*.pdf

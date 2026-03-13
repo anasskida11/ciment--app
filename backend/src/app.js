@@ -27,6 +27,9 @@ const errorHandler = require('./middleware/errorHandler.middleware');
 
 const app = express();
 
+// Trust Railway/Vercel proxy
+app.set('trust proxy', 1);
+
 // Middleware de sécurité
 app.use(helmet({
   contentSecurityPolicy: {

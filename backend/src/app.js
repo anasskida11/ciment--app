@@ -49,10 +49,12 @@ app.use(helmet({
 // Configuration CORS - Permettre toutes les origines en développement
 const corsOptions = {
   origin: function (origin, callback) {
-    // Use CORS_ORIGIN env var, fallback to localhost in development only
-    const allowedOrigins = process.env.CORS_ORIGIN 
-      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-      : ['http://localhost:3001', 'http://localhost:3000'];
+    const allowedOrigins = [
+      'https://ciment-app.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()) : [])
+    ];
     
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);

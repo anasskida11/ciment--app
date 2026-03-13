@@ -100,7 +100,7 @@ const createUser = async (req, res, next) => {
     }
 
     // Mot de passe par défaut
-    const defaultPassword = require('crypto').randomBytes(6).toString('hex');
+    const defaultPassword = '00000000';
     const hashedPassword = await hashPassword(defaultPassword);
 
     // Création de l'utilisateur
@@ -153,7 +153,7 @@ const resetUserPassword = async (req, res, next) => {
       });
     }
 
-    const resetPassword = require('crypto').randomBytes(6).toString('hex');
+    const resetPassword = '00000000';
     const hashedPassword = await hashPassword(resetPassword);
 
     await prisma.user.update({

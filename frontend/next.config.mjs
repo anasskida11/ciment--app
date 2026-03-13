@@ -6,8 +6,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Reduce source maps in production
   productionBrowserSourceMaps: false,
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://ciment-app-production.up.railway.app/api',
+  },
 }
 
 export default nextConfig

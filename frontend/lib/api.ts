@@ -145,7 +145,7 @@ class ApiClient {
     } catch (err: any) {
       // Gérer les erreurs de réseau (connexion refusée, etc.)
       if (err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('Failed to fetch'))) {
-        const error = new Error('Impossible de se connecter au serveur. Vérifiez que le backend est démarré sur http://localhost:3000');
+        const error = new Error(`Impossible de se connecter au serveur. URL: ${this.baseURL}`);
         (error as any).status = 0;
         throw error;
       }

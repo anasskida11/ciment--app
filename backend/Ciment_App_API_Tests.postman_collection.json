@@ -1,0 +1,1695 @@
+{
+	"info": {
+		"_postman_id": "ciment-app-api-tests",
+		"name": "Ciment App - Complete API Tests",
+		"description": "Complete API test collection for Ciment Distribution App",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health & Test",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Response has status field', () => { pm.expect(pm.response.json()).to.have.property('status'); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Test API",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('API is working', () => { pm.expect(pm.response.json().success).to.be.true; });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Test Auth Endpoint",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "auth"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Authentication successful', () => { pm.expect(pm.response.json().success).to.be.true; });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  const jsonData = pm.response.json();",
+								"  pm.expect(jsonData).to.have.property('data');",
+								"  pm.expect(jsonData.data).to.have.property('token');",
+								"  pm.environment.set('authToken', jsonData.data.token);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"role\": \"ADMIN\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"if (pm.response.code === 200) {",
+								"  const jsonData = pm.response.json();",
+								"  pm.expect(jsonData).to.have.property('data');",
+								"  pm.expect(jsonData.data).to.have.property('token');",
+								"  pm.environment.set('authToken', jsonData.data.token);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Me",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "me"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Returns user data', () => { pm.expect(pm.response.json().data).to.have.property('user'); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Returns array', () => { pm.expect(pm.response.json().data).to.be.an('array'); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", ":id"],
+							"variable": [{"key": "id", "value": "{{userId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Returns user object', () => { pm.expect(pm.response.json().data).to.have.property('id'); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create User",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('userId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"New\",\n  \"lastName\": \"User\",\n  \"role\": \"CAISSIER_VENTE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users"]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Name\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", ":id"],
+							"variable": [{"key": "id", "value": "{{userId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", ":id"],
+							"variable": [{"key": "id", "value": "{{userId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Clients",
+			"item": [
+				{
+					"name": "Get All Clients",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/clients",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clients"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Returns array', () => { pm.expect(pm.response.json().data).to.be.an('array'); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Client By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/clients/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clients", ":id"],
+							"variable": [{"key": "id", "value": "{{clientId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Client",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('clientId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Client Test\",\n  \"email\": \"client@example.com\",\n  \"phone\": \"+222123456789\",\n  \"idNumber\": \"ID123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clients",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clients"]
+						}
+					}
+				},
+				{
+					"name": "Update Client",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Client Name\",\n  \"phone\": \"+222987654321\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clients/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clients", ":id"],
+							"variable": [{"key": "id", "value": "{{clientId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Delete Client",
+					"request": {
+						"method": "DELETE",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/clients/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clients", ":id"],
+							"variable": [{"key": "id", "value": "{{clientId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Returns array', () => { pm.expect(pm.response.json().data).to.be.an('array'); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Product By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", ":id"],
+							"variable": [{"key": "id", "value": "{{productId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Product",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('productId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Ciment Portland\",\n  \"description\": \"Ciment de qualité supérieure\",\n  \"unit\": \"tonne\",\n  \"price\": 50000,\n  \"stock\": 100,\n  \"minStock\": 10\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products"]
+						}
+					}
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"price\": 52000,\n  \"stock\": 150\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", ":id"],
+							"variable": [{"key": "id", "value": "{{productId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", ":id"],
+							"variable": [{"key": "id", "value": "{{productId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Returns array', () => { pm.expect(pm.response.json().data).to.be.an('array'); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Order By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", ":id"],
+							"variable": [{"key": "id", "value": "{{orderId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Order",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('orderId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"{{clientId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 10,\n      \"unitPrice\": 50000\n    }\n  ],\n  \"notes\": \"Test order\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders"]
+						}
+					}
+				},
+				{
+					"name": "Confirm Order",
+					"request": {
+						"method": "PUT",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/:id/confirm",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", ":id", "confirm"],
+							"variable": [{"key": "id", "value": "{{orderId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Update Order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notes\": \"Updated notes\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", ":id"],
+							"variable": [{"key": "id", "value": "{{orderId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Delete Order",
+					"request": {
+						"method": "DELETE",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", ":id"],
+							"variable": [{"key": "id", "value": "{{orderId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Suppliers",
+			"item": [
+				{
+					"name": "Get All Suppliers",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/suppliers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "suppliers"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });",
+								"pm.test('Returns array', () => { pm.expect(pm.response.json().data).to.be.an('array'); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Supplier By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/suppliers/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "suppliers", ":id"],
+							"variable": [{"key": "id", "value": "{{supplierId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Supplier",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('supplierId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Supplier Test\",\n  \"email\": \"supplier@example.com\",\n  \"phone\": \"+222123456789\",\n  \"idNumber\": \"SUP123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/suppliers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "suppliers"]
+						}
+					}
+				},
+				{
+					"name": "Update Supplier",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Supplier Name\",\n  \"phone\": \"+222987654321\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/suppliers/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "suppliers", ":id"],
+							"variable": [{"key": "id", "value": "{{supplierId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Delete Supplier",
+					"request": {
+						"method": "DELETE",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/suppliers/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "suppliers", ":id"],
+							"variable": [{"key": "id", "value": "{{supplierId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Trucks",
+			"item": [
+				{
+					"name": "Get Available Trucks",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks/available",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks", "available"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get All Trucks",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Truck By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks", ":id"],
+							"variable": [{"key": "id", "value": "{{truckId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Truck",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('truckId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"matricule\": \"MR-1234-AB\",\n  \"brand\": \"Mercedes\",\n  \"model\": \"Actros\",\n  \"year\": 2020,\n  \"capacity\": 30\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks"]
+						}
+					}
+				},
+				{
+					"name": "Update Truck",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"brand\": \"Volvo\",\n  \"model\": \"FH16\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks", ":id"],
+							"variable": [{"key": "id", "value": "{{truckId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Add Maintenance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"Oil Change\",\n  \"description\": \"Regular maintenance\",\n  \"cost\": 50000,\n  \"date\": \"2024-01-15T00:00:00.000Z\",\n  \"nextDueDate\": \"2024-07-15T00:00:00.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks/:id/maintenance",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks", ":id", "maintenance"],
+							"variable": [{"key": "id", "value": "{{truckId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Add Fuel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"quantity\": 200,\n  \"cost\": 100000,\n  \"date\": \"2024-01-15T00:00:00.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks/:id/fuel",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks", ":id", "fuel"],
+							"variable": [{"key": "id", "value": "{{truckId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Add Expense",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"Toll\",\n  \"description\": \"Highway toll\",\n  \"cost\": 5000,\n  \"date\": \"2024-01-15T00:00:00.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/trucks/:id/expense",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "trucks", ":id", "expense"],
+							"variable": [{"key": "id", "value": "{{truckId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Stock Requests",
+			"item": [
+				{
+					"name": "Get All Stock Requests",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/stock-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock-requests"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Stock Request",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('stockRequestId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 10\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/stock-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock-requests"]
+						}
+					}
+				},
+				{
+					"name": "Receive Stock Request",
+					"request": {
+						"method": "PUT",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/stock-requests/:id/receive",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock-requests", ":id", "receive"],
+							"variable": [{"key": "id", "value": "{{stockRequestId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Stock Receipts",
+			"item": [
+				{
+					"name": "Get All Stock Receipts",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/stock-receipts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock-receipts"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Stock Receipt",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('stockReceiptId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"supplierId\": \"{{supplierId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 50,\n      \"unitPrice\": 45000\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/stock-receipts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock-receipts"]
+						}
+					}
+				},
+				{
+					"name": "Confirm Stock Receipt",
+					"request": {
+						"method": "PUT",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/stock-receipts/:id/confirm",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stock-receipts", ":id", "confirm"],
+							"variable": [{"key": "id", "value": "{{stockReceiptId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Delivery Notes",
+			"item": [
+				{
+					"name": "Get All Delivery Notes",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/delivery-notes",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "delivery-notes"]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Delivery Note",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('deliveryNoteId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"deliveryAddress\": \"123 Test Street, Nouakchott\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 10\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/delivery-notes",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "delivery-notes"]
+						}
+					}
+				},
+				{
+					"name": "Confirm Delivery",
+					"request": {
+						"method": "PUT",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/delivery-notes/:id/confirm",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "delivery-notes", ":id", "confirm"],
+							"variable": [{"key": "id", "value": "{{deliveryNoteId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Accounts",
+			"item": [
+				{
+					"name": "Get Client Account",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/client/:clientId",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "accounts", "client", ":clientId"],
+							"variable": [{"key": "clientId", "value": "{{clientId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Supplier Account",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/supplier/:supplierId",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "accounts", "supplier", ":supplierId"],
+							"variable": [{"key": "supplierId", "value": "{{supplierId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Account By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "accounts", ":id"],
+							"variable": [{"key": "id", "value": "{{accountId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Update Account",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"creditLimit\": 1000000,\n  \"alertThreshold\": 500000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "accounts", ":id"],
+							"variable": [{"key": "id", "value": "{{accountId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				}
+			]
+		},
+		{
+			"name": "Transactions",
+			"item": [
+				{
+					"name": "Get Account Transactions",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions/account/:accountId",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transactions", "account", ":accountId"],
+							"variable": [{"key": "accountId", "value": "{{accountId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Get Transaction By ID",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transactions", ":id"],
+							"variable": [{"key": "id", "value": "{{transactionId}}"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200', () => { pm.response.to.have.status(200); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Create Transaction",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201', () => { pm.response.to.have.status(201); });",
+								"if (pm.response.code === 201) {",
+								"  pm.environment.set('transactionId', pm.response.json().data.id);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{authToken}}", "type": "text"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"type\": \"CREDIT\",\n  \"amount\": 500000,\n  \"description\": \"Payment received\",\n  \"reference\": \"REF123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "transactions"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "PDF Downloads",
+			"item": [
+				{
+					"name": "Download Invoice PDF",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/pdf/invoice/:filename",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pdf", "invoice", ":filename"],
+							"variable": [{"key": "filename", "value": "invoice-123.pdf"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200 or 404', () => { pm.expect([200, 404]).to.include(pm.response.code); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Download Quote PDF",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/pdf/quote/:filename",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pdf", "quote", ":filename"],
+							"variable": [{"key": "filename", "value": "quote-123.pdf"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200 or 404', () => { pm.expect([200, 404]).to.include(pm.response.code); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Download Delivery Note PDF",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/pdf/delivery-note/:filename",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pdf", "delivery-note", ":filename"],
+							"variable": [{"key": "filename", "value": "delivery-note-123.pdf"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200 or 404', () => { pm.expect([200, 404]).to.include(pm.response.code); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Download Stock Request PDF",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/pdf/stock-request/:filename",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pdf", "stock-request", ":filename"],
+							"variable": [{"key": "filename", "value": "stock-request-123.pdf"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200 or 404', () => { pm.expect([200, 404]).to.include(pm.response.code); });"
+							]
+						}
+					}]
+				},
+				{
+					"name": "Download Stock Receipt PDF",
+					"request": {
+						"method": "GET",
+						"header": [{
+							"key": "Authorization",
+							"value": "Bearer {{authToken}}",
+							"type": "text"
+						}],
+						"url": {
+							"raw": "{{baseUrl}}/api/pdf/stock-receipt/:filename",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "pdf", "stock-receipt", ":filename"],
+							"variable": [{"key": "filename", "value": "stock-receipt-123.pdf"}]
+						}
+					},
+					"event": [{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200 or 404', () => { pm.expect([200, 404]).to.include(pm.response.code); });"
+							]
+						}
+					}]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

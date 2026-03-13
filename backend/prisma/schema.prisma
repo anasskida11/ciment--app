@@ -1,0 +1,487 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Modèle User - Gestion des utilisateurs avec rôles
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  role      UserRole @default(GESTIONNAIRE_CLIENTELE)
+  isActive  Boolean  @default(false) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  ordersCreated       Order[]            @relation("CreatedBy")
+  clientsManaged      Client[]
+  transactionsCreated Transaction[]      @relation("TransactionCreatedBy")
+  stockRequests       StockRequest[]
+  deliveryNotes       DeliveryNote[]
+  stockReceipts       StockReceipt[]
+  truckMaintenances   TruckMaintenance[]
+  truckFuels          TruckFuel[]
+  truckExpenses       TruckExpense[]
+  notifications       Notification[]
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+// Enum pour les rôles utilisateurs
+enum UserRole {
+  ADMIN                          // Administrateur
+  GESTIONNAIRE_CLIENTELE         // Gestionnaire de clientèles
+  GESTIONNAIRE_STOCK             // Gestionnaire de stock
+  GESTIONNAIRE_TRUCKS            // Gestionnaire de trucks
+  COMPTABLE                      // Comptable
+}
+
+// Modèle Client - Gestion des clients
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  idNumber  String?  @unique @map("id_number") // Numéro d'identification
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  chargeClienteleId String?       @map("charge_clientele_id")
+  chargeClientele   User?         @relation(fields: [chargeClienteleId], references: [id])
+  orders            Order[]
+  account           Account?
+
+  @@map("clients")
+}
+
+// Modèle Product - Gestion des produits (stock)
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  unit        String   @default("tonne") // Unité de mesure (tonne, sac, etc.)
+  price       Decimal  @db.Decimal(10, 2) // Prix unitaire
+  stock       Decimal  @default(0) @db.Decimal(10, 2) // Stock disponible
+  minStock    Decimal? @default(0) @map("min_stock") @db.Decimal(10, 2) // Stock minimum
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  orderItems        OrderItem[]
+  stockReceipts     StockReceiptItem[]
+  stockRequestItems StockRequestItem[]
+  deliveryNoteItems DeliveryNoteItem[]
+
+  @@map("products")
+}
+
+// Modèle Order - Gestion des commandes
+model Order {
+  id          String      @id @default(uuid())
+  orderNumber String      @unique @map("order_number") // Numéro de commande unique
+  clientId    String      @map("client_id")
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal     @default(0) @map("total_amount") @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  
+  // Relations
+  client          Client           @relation(fields: [clientId], references: [id])
+  createdById     String           @map("created_by_id")
+  createdBy       User             @relation("CreatedBy", fields: [createdById], references: [id])
+  items           OrderItem[]
+  stockRequest    StockRequest?
+  deliveryNote    DeliveryNote?
+  truckAssignments TruckAssignment[]
+  transactions    Transaction[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdById])
+  @@map("orders")
+}
+
+// Enum pour le statut des commandes
+enum OrderStatus {
+  PENDING          // En attente
+  CONFIRMED        // Confirmée
+  STOCK_REQUESTED   // Bon de demande envoyé
+  IN_PREPARATION   // En préparation
+  READY            // Prête
+  DELIVERED        // Livrée
+  ARCHIVED         // Archivée
+  CANCELLED        // Annulée
+}
+
+// Modèle OrderItem - Articles de commande
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  productId String   @map("product_id")
+  quantity  Decimal  @db.Decimal(10, 2)
+  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2) // Prix au moment de la commande
+  subtotal  Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// Modèle Supplier - Fournisseurs
+model Supplier {
+  id         String   @id @default(uuid())
+  name       String
+  email      String?
+  phone      String?
+  idNumber   String?  @unique @map("id_number") // Numéro d'identification
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  account       Account?
+  stockReceipts StockReceipt[]
+
+  @@map("suppliers")
+}
+
+// Modèle Account - Comptes (Client ou Fournisseur)
+model Account {
+  id             String      @id @default(uuid())
+  accountType    AccountType @map("account_type")
+  clientId       String?     @unique @map("client_id")
+  supplierId     String?     @unique @map("supplier_id")
+  balance        Decimal     @default(0) @db.Decimal(12, 2) // Solde
+  creditLimit    Decimal?    @map("credit_limit") @db.Decimal(12, 2) // Limite de crédit
+  alertThreshold Decimal?    @map("alert_threshold") @db.Decimal(12, 2) // Seuil d'alerte
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  client       Client?       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("accounts")
+}
+
+enum AccountType {
+  CLIENT
+  SUPPLIER
+}
+
+// Modèle Transaction - Transactions avec justificatifs
+model Transaction {
+  id          String          @id @default(uuid())
+  accountId   String          @map("account_id")
+  type        TransactionType
+  amount      Decimal         @db.Decimal(12, 2)
+  description String?
+  documentUrl String?         @map("document_url") // URL du justificatif (PDF, image)
+  reference   String?         // Référence externe
+  orderId     String?         @map("order_id")
+  createdById String          @map("created_by_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdBy User      @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  order     Order?    @relation(fields: [orderId], references: [id])
+
+  @@index([accountId])
+  @@index([createdAt])
+  @@index([type])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  DEBIT   // Débit (achat, paiement)
+  CREDIT  // Crédit (vente, paiement reçu)
+  PAYMENT // Paiement
+  REFUND  // Remboursement
+}
+
+// Modèle Truck - Gestion des voitures/trucks
+model Truck {
+  id        String   @id @default(uuid())
+  matricule String   @unique // Numéro d'immatriculation
+  brand     String?  // Marque
+  model     String?  // Modèle
+  year      Int?     // Année
+  capacity  Decimal? @db.Decimal(10, 2) // Capacité en tonnes
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  assignments  TruckAssignment[]
+  maintenances TruckMaintenance[]
+  fuels        TruckFuel[]
+  expenses     TruckExpense[]
+
+  @@map("trucks")
+}
+
+// Modèle TruckAssignment - Assignation de truck à une commande
+model TruckAssignment {
+  id           String                @id @default(uuid())
+  orderId      String                @map("order_id")
+  truckId      String                @map("truck_id")
+  quantity     Decimal               @db.Decimal(10, 2)
+  driverName   String?               @map("driver_name")
+  status       TruckAssignmentStatus @default(ASSIGNED)
+  deliveryCost Decimal?              @map("delivery_cost") @db.Decimal(10, 2)
+  notes        String?
+  assignedAt   DateTime              @default(now()) @map("assigned_at")
+  completedAt  DateTime?             @map("completed_at")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  truck Truck @relation(fields: [truckId], references: [id])
+
+  @@unique([orderId, truckId])
+  @@index([truckId])
+  @@index([status])
+  @@map("truck_assignments")
+}
+
+enum TruckAssignmentStatus {
+  ASSIGNED
+  CONFIRMED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+// Modèle TruckMaintenance - Maintenance des trucks
+model TruckMaintenance {
+  id          String    @id @default(uuid())
+  truckId     String    @map("truck_id")
+  type        String    // Type de maintenance
+  description String?
+  cost        Decimal   @db.Decimal(10, 2)
+  date        DateTime
+  nextDueDate DateTime? @map("next_due_date")
+  documentUrl String?   @map("document_url") // Justificatif
+  createdById String    @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  truck     Truck @relation(fields: [truckId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id])
+
+  @@map("truck_maintenances")
+}
+
+// Modèle TruckFuel - Consommation de carburant
+model TruckFuel {
+  id          String   @id @default(uuid())
+  truckId     String   @map("truck_id")
+  quantity    Decimal  @db.Decimal(10, 2) // Quantité en litres
+  cost        Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  documentUrl String?  @map("document_url") // Justificatif (facture station)
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  truck     Truck @relation(fields: [truckId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id])
+
+  @@map("truck_fuels")
+}
+
+// Modèle TruckExpense - Autres charges des trucks
+model TruckExpense {
+  id          String   @id @default(uuid())
+  truckId     String   @map("truck_id")
+  type        String   // Type de charge (péage, parking, etc.)
+  description String?
+  cost        Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  documentUrl String?  @map("document_url") // Justificatif
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  truck     Truck @relation(fields: [truckId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id])
+
+  @@map("truck_expenses")
+}
+
+// Modèle StockRequest - Bon de demande vers le magasin
+model StockRequest {
+  id            String             @id @default(uuid())
+  requestNumber String             @unique @map("request_number")
+  orderId       String             @unique @map("order_id")
+  status        StockRequestStatus @default(PENDING)
+  requestedById String             @map("requested_by_id")
+  receivedAt    DateTime?         @map("received_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  requestedBy User               @relation(fields: [requestedById], references: [id])
+  items       StockRequestItem[]
+
+  @@map("stock_requests")
+}
+
+enum StockRequestStatus {
+  PENDING
+  RECEIVED
+  PROCESSED
+  CANCELLED
+}
+
+// Modèle StockRequestItem - Articles du bon de demande
+model StockRequestItem {
+  id             String   @id @default(uuid())
+  stockRequestId String   @map("stock_request_id")
+  productId      String   @map("product_id")
+  quantity       Decimal  @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  stockRequest StockRequest @relation(fields: [stockRequestId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id])
+
+  @@map("stock_request_items")
+}
+
+// Modèle DeliveryNote - Bon de livraison
+model DeliveryNote {
+  id              String             @id @default(uuid())
+  noteNumber      String             @unique @map("note_number")
+  orderId         String             @unique @map("order_id")
+  status          DeliveryNoteStatus @default(DRAFT)
+  deliveryAddress String?            @map("delivery_address")
+  deliveredAt     DateTime?         @map("delivered_at")
+  createdById     String             @map("created_by_id")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdBy User               @relation(fields: [createdById], references: [id])
+  items     DeliveryNoteItem[]
+
+  @@map("delivery_notes")
+}
+
+enum DeliveryNoteStatus {
+  DRAFT
+  CONFIRMED
+  DELIVERED
+  CANCELLED
+}
+
+// Modèle DeliveryNoteItem - Articles du bon de livraison
+model DeliveryNoteItem {
+  id             String   @id @default(uuid())
+  deliveryNoteId String   @map("delivery_note_id")
+  productId      String   @map("product_id")
+  quantity       Decimal  @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  deliveryNote DeliveryNote @relation(fields: [deliveryNoteId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id])
+
+  @@map("delivery_note_items")
+}
+
+// Modèle StockReceipt - Réception de nouveaux stocks
+model StockReceipt {
+  id            String             @id @default(uuid())
+  receiptNumber String             @unique @map("receipt_number")
+  supplierId    String?            @map("supplier_id")
+  status        StockReceiptStatus @default(PENDING)
+  documentUrl   String?            @map("document_url") // Justificatif (facture fournisseur)
+  receivedById  String             @map("received_by_id")
+  receivedAt    DateTime?          @map("received_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  supplier   Supplier?          @relation(fields: [supplierId], references: [id])
+  receivedBy User               @relation(fields: [receivedById], references: [id])
+  items      StockReceiptItem[]
+
+  @@map("stock_receipts")
+}
+
+enum StockReceiptStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+// Modèle StockReceiptItem - Articles reçus
+model StockReceiptItem {
+  id             String   @id @default(uuid())
+  stockReceiptId String   @map("stock_receipt_id")
+  productId      String   @map("product_id")
+  quantity       Decimal  @db.Decimal(10, 2)
+  unitPrice      Decimal  @map("unit_price") @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  stockReceipt StockReceipt @relation(fields: [stockReceiptId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id])
+
+  @@map("stock_receipt_items")
+}
+
+// Modèle Notification - Notifications pour l'administrateur
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false) @map("is_read")
+  metadata  Json?
+  userId    String           @map("user_id")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  PASSWORD_RESET_REQUEST
+  ORDER_CREATED
+  STOCK_LOW
+  GENERAL
+}

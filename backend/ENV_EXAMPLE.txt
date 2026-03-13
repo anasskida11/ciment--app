@@ -1,0 +1,23 @@
+# Configuration de la base de données PostgreSQL
+DATABASE_URL="postgresql://user:password@localhost:5432/ciment_db?schema=public"
+
+# Configuration JWT
+JWT_SECRET="votre_secret_jwt_tres_securise_changez_moi_en_production"
+JWT_EXPIRES_IN="7d"
+
+# Configuration du serveur
+PORT=3000
+NODE_ENV=development
+
+# Configuration CORS (comma-separated origins)
+CORS_ORIGIN="http://localhost:3001,http://localhost:3000"
+
+# Admin seed credentials (used only during initial seed)
+ADMIN_EMAIL=admin@ciment.com
+ADMIN_PASSWORD=ChangeMe!2024
+
+# Configuration Entreprise (pour PDFs)
+COMPANY_NAME=Votre Entreprise de Distribution
+COMPANY_ADDRESS=Adresse complète, Ville, Mauritanie
+COMPANY_PHONE=+222XXXXXXXXX
+COMPANY_EMAIL=contact@entreprise.mr

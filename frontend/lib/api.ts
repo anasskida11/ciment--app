@@ -3,6 +3,10 @@
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// In production on Vercel, use the proxy route to avoid CORS
+const EFFECTIVE_API_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? '/api-proxy'
+  : API_URL;
 
 export interface ApiError {
   message: string;
@@ -198,11 +202,14 @@ class ApiClient {
 // Create and export a singleton instance
 export const apiClient = new ApiClient(API_URL);
 
+// Use the proxy URL in production to avoid CORS
+const effectiveClient = new ApiClient(EFFECTIVE_API_URL);
+
 // Export convenience methods
 export const api = {
-  get: <T>(endpoint: string, options?: RequestInit) => apiClient.get<T>(endpoint, options),
-  post: <T>(endpoint: string, data?: unknown, options?: RequestInit) => apiClient.post<T>(endpoint, data, options),
-  put: <T>(endpoint: string, data?: unknown, options?: RequestInit) => apiClient.put<T>(endpoint, data, options),
-  patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) => apiClient.patch<T>(endpoint, data, options),
-  delete: <T>(endpoint: string, options?: RequestInit) => apiClient.delete<T>(endpoint, options),
+  get: <T>(endpoint: string, options?: RequestInit) => effectiveClient.get<T>(endpoint, options),
+  post: <T>(endpoint: string, data?: unknown, options?: RequestInit) => effectiveClient.post<T>(endpoint, data, options),
+  put: <T>(endpoint: string, data?: unknown, options?: RequestInit) => effectiveClient.put<T>(endpoint, data, options),
+  patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) => effectiveClient.patch<T>(endpoint, data, options),
+  delete: <T>(endpoint: string, options?: RequestInit) => effectiveClient.delete<T>(endpoint, options),
 };

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2 } from 'lucide-react';
-import { formatCurrency } from '@/shared/utils/format';
+import { formatCurrency, formatQuantityWithKg } from '@/shared/utils/format';
 import type { OrderItem } from '../types/order-item';
 
 interface OrderItemsListProps {
@@ -43,7 +43,7 @@ export function OrderItemsList({ items, onRemoveItem }: OrderItemsListProps) {
                 <TableRow key={item.id}>
                   <TableCell className="text-right">{item.productName}</TableCell>
                   <TableCell className="text-right">{item.price} أ.م</TableCell>
-                  <TableCell className="text-right">{item.quantity}</TableCell>
+                  <TableCell className="text-right">{formatQuantityWithKg(item.quantity, 'tonne')}</TableCell>
                   <TableCell className="font-semibold text-right">{formatCurrency(item.amount)}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => onRemoveItem(item.id)}>

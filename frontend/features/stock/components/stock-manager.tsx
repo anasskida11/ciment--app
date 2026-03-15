@@ -15,7 +15,7 @@ import { ProductList } from './product-list';
 import { ProductForm } from './product-form';
 import { useProducts } from '@/features/products/hooks/use-products';
 import { useOrders } from '@/features/orders/hooks/use-orders';
-import { formatCurrency, formatDate, formatNumber } from '@/shared/utils/format';
+import { formatCurrency, formatDate, formatNumber, formatQuantityWithKg } from '@/shared/utils/format';
 import type { Product } from '@/features/products/types';
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -106,10 +106,6 @@ export function StockManager() {
     } catch (error) {
       // Error handled in hook
     }
-  };
-
-  const handleUpdateStock = (id: string, stock: number) => {
-    // Stock is updated via the ProductList component
   };
 
   const handleCloseForm = () => {
@@ -331,7 +327,7 @@ export function StockManager() {
                                     {order.items.map((item) => (
                                       <div key={item.id} className="grid grid-cols-4 gap-3 text-sm">
                                         <div className="text-right">{item.product?.name || 'منتج'}</div>
-                                        <div className="text-right">{formatNumber(Number(item.quantity || 0))}</div>
+                                        <div className="text-right">{formatQuantityWithKg(Number(item.quantity || 0), item.product?.unit || 'tonne')}</div>
                                         <div className="text-right">{formatCurrency(item.unitPrice)}</div>
                                         <div className="text-right">{formatCurrency(item.subtotal)}</div>
                                       </div>
@@ -433,7 +429,7 @@ export function StockManager() {
                                     {orderForNote.items.map((item) => (
                                       <div key={item.id} className="grid grid-cols-4 gap-3 text-sm">
                                         <div className="text-right">{item.product?.name || 'منتج'}</div>
-                                        <div className="text-right">{formatNumber(Number(item.quantity || 0))}</div>
+                                        <div className="text-right">{formatQuantityWithKg(Number(item.quantity || 0), item.product?.unit || 'tonne')}</div>
                                         <div className="text-right">{formatCurrency(item.unitPrice)}</div>
                                         <div className="text-right">{formatCurrency(item.subtotal)}</div>
                                       </div>
@@ -478,7 +474,6 @@ export function StockManager() {
         searchTerm={searchTerm}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onUpdateStock={handleUpdateStock}
       />
 
       {/* Stock Statistics */}

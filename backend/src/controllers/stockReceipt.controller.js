@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma.util');
+const { createNotification } = require('../services/notification.service');
 
 /**
  * Génère un numéro de réception unique
@@ -129,6 +130,14 @@ const createStockReceipt = async (req, res, next) => {
       }
     });
 
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'استلام مخزون جديد',
+      `تم إنشاء استلام مخزون #${stockReceipt.receiptNumber}`,
+      null
+    );
+
     res.status(201).json({
       success: true,
       message: 'Réception de stock créée avec succès',
@@ -215,6 +224,14 @@ const confirmStockReceipt = async (req, res, next) => {
         }
       }
     });
+
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'تأكيد استلام مخزون',
+      `تم تأكيد استلام المخزون #${updated.receiptNumber}`,
+      null
+    );
 
     res.status(200).json({
       success: true,

@@ -18,10 +18,11 @@ import { Plus } from 'lucide-react';
 import { useProducts } from '@/features/products/hooks/use-products';
 import type { Product } from '@/features/products/types';
 import { useToast } from '@/hooks/use-toast';
+import { formatQuantityWithKg } from '@/shared/utils/format';
 
 const orderItemSchema = z.object({
   productId: z.string().min(1, 'اختر منتج'),
-  quantity: z.coerce.number().min(1, 'الكمية لا تقل عن 1'),
+  quantity: z.coerce.number().min(1, 'الكمية لا تقل عن 1 كغ'),
 });
 
 type OrderItemFormData = z.infer<typeof orderItemSchema>;
@@ -62,7 +63,7 @@ export function ProductSelector({ items, onAddItem, onRemoveItem }: ProductSelec
     if (requestedQuantity > availableStock) {
       toast({
         title: 'خطأ',
-        description: `الكمية المطلوبة (${requestedQuantity}) تتجاوز المخزون المتاح (${availableStock})`,
+        description: `الكمية المطلوبة (${formatQuantityWithKg(requestedQuantity, product.unit || 'tonne')}) تتجاوز المخزون المتاح (${formatQuantityWithKg(availableStock, product.unit || 'tonne')})`,
         variant: 'destructive',
       });
       return;
@@ -76,7 +77,7 @@ export function ProductSelector({ items, onAddItem, onRemoveItem }: ProductSelec
       if (newQuantity > availableStock) {
         toast({
           title: 'خطأ',
-          description: `الكمية الإجمالية (${newQuantity}) تتجاوز المخزون المتاح (${availableStock})`,
+          description: `الكمية الإجمالية (${formatQuantityWithKg(newQuantity, product.unit || 'tonne')}) تتجاوز المخزون المتاح (${formatQuantityWithKg(availableStock, product.unit || 'tonne')})`,
           variant: 'destructive',
         });
         return;
@@ -95,8 +96,8 @@ export function ProductSelector({ items, onAddItem, onRemoveItem }: ProductSelec
         productId: data.productId,
         productName: product.name,
         price: product.price,
-        quantity: data.quantity,
-        amount: product.price * data.quantity,
+        quantity: requestedQuantity,
+        amount: product.price * requestedQuantity,
       };
       onAddItem(newItem);
     }
@@ -146,7 +147,7 @@ export function ProductSelector({ items, onAddItem, onRemoveItem }: ProductSelec
                     ) : (
                       products.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {product.name} - {product.price} أ.م (المتاح: {product.stock})
+                          {product.name} - {product.price} أ.م (المتاح: {formatQuantityWithKg(product.stock, product.unit || 'tonne')})
                         </SelectItem>
                       ))
                     )}
@@ -157,13 +158,14 @@ export function ProductSelector({ items, onAddItem, onRemoveItem }: ProductSelec
                 )}
               </div>
               <div>
-                <Label htmlFor="quantity">الكمية</Label>
+                <Label htmlFor="quantity">الكمية (كغ)</Label>
                 <Input
                   id="quantity"
                   type="number"
                   {...form.register('quantity')}
-                  placeholder="أدخل الكمية"
+                  placeholder="أدخل الكمية بالكيلوغرام"
                   min="1"
+                  step="1"
                 />
                 {form.formState.errors.quantity && (
                   <p className="text-destructive text-sm mt-1">{form.formState.errors.quantity.message}</p>

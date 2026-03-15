@@ -62,10 +62,15 @@ export function TruckForm({ isOpen, onClose, editingTruck }: TruckFormProps) {
 
   const handleSubmit = async (data: TruckFormData) => {
     try {
+      const payload: CreateTruckDto = {
+        ...data,
+        capacity: data.capacity,
+      };
+
       if (editingTruck) {
-        await updateTruck(editingTruck.id, data);
+        await updateTruck(editingTruck.id, payload);
       } else {
-        await createTruck(data);
+        await createTruck(payload);
       }
       form.reset();
       onClose();
@@ -104,8 +109,8 @@ export function TruckForm({ isOpen, onClose, editingTruck }: TruckFormProps) {
               <Input id="year" type="number" {...form.register('year')} placeholder="2020" />
             </div>
             <div>
-              <Label htmlFor="capacity">السعة (طن)</Label>
-              <Input id="capacity" type="number" {...form.register('capacity')} placeholder="10" step="0.1" />
+              <Label htmlFor="capacity">السعة (كغ)</Label>
+              <Input id="capacity" type="number" {...form.register('capacity')} placeholder="10000" step="1" />
             </div>
           </div>
           <Button type="submit" className="w-full">

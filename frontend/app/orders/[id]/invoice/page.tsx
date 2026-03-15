@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Download, Printer, Loader2 } from "lucide-react";
 import { orderService } from "@/features/orders/services/order.service";
-import { formatCurrency, formatDateTime } from "@/shared/utils/format";
+import { formatCurrency, formatDateTime, formatQuantityWithKg } from "@/shared/utils/format";
 import type { Order } from "@/features/orders/types";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -38,7 +38,7 @@ function getReceiptBodyHtml(order: Order) {
       <tr style="${idx % 2 === 1 ? "background-color:rgb(249,250,251)" : ""}">
         <td style="text-align:center;padding:12px;border:1px solid rgb(229,231,235)">${idx + 1}</td>
         <td style="text-align:right;padding:12px;border:1px solid rgb(229,231,235)">${escapeHtml(item.product?.name || "منتج محذوف")}</td>
-        <td style="text-align:center;padding:12px;border:1px solid rgb(229,231,235)">${item.quantity}</td>
+        <td style="text-align:center;padding:12px;border:1px solid rgb(229,231,235)">${escapeHtml(formatQuantityWithKg(item.quantity, item.product?.unit || 'tonne'))}</td>
         <td style="text-align:left;padding:12px;border:1px solid rgb(229,231,235)">${escapeHtml(formatCurrency(item.unitPrice))}</td>
         <td style="text-align:left;padding:12px;border:1px solid rgb(229,231,235);font-weight:600">${escapeHtml(formatCurrency(item.subtotal))}</td>
       </tr>

@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma.util');
 const pdfService = require('../services/pdf/pdf.service');
+const { createNotification } = require('../services/notification.service');
 
 /**
  * Génère un numéro de bon de livraison unique (BL-YYMMDD-XXXX)
@@ -164,6 +165,14 @@ const createDeliveryNote = async (req, res, next) => {
       }
     });
 
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'سند تسليم جديد',
+      `تم إنشاء سند التسليم #${deliveryNote.noteNumber} للطلب #${deliveryNote.order?.orderNumber || orderId}`,
+      deliveryNote.orderId
+    );
+
     res.status(201).json({
       success: true,
       message: 'Bon de livraison créé avec succès',
@@ -276,6 +285,14 @@ const confirmDelivery = async (req, res, next) => {
         }
       }
     });
+
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'تأكيد تسليم',
+      `تم تأكيد تسليم سند #${updated.noteNumber}`,
+      updated.orderId
+    );
 
     res.status(200).json({
       success: true,

@@ -9,7 +9,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Download, Printer, Loader2 } from 'lucide-react';
-import { formatCurrency, formatDateTime } from '@/shared/utils/format';
+import { formatCurrency, formatDateTime, formatQuantityWithKg } from '@/shared/utils/format';
 import type { Order } from '../types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -55,7 +55,7 @@ export function OrderReceipt({ order, isOpen, onClose }: OrderReceiptProps) {
       <tr>
         <td style="text-align:center;padding:12px;border:1px solid rgb(229,231,235)">${idx + 1}</td>
         <td style="text-align:right;padding:12px;border:1px solid rgb(229,231,235)">${escapeHtml(item.product?.name || 'منتج محذوف')}</td>
-        <td style="text-align:center;padding:12px;border:1px solid rgb(229,231,235)">${item.quantity}</td>
+        <td style="text-align:center;padding:12px;border:1px solid rgb(229,231,235)">${escapeHtml(formatQuantityWithKg(item.quantity, item.product?.unit || 'tonne'))}</td>
         <td style="text-align:left;padding:12px;border:1px solid rgb(229,231,235)">${escapeHtml(formatCurrency(item.unitPrice))}</td>
         <td style="text-align:left;padding:12px;border:1px solid rgb(229,231,235);font-weight:600">${escapeHtml(formatCurrency(item.subtotal))}</td>
       </tr>

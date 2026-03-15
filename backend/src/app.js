@@ -21,6 +21,7 @@ const stockReceiptRoutes = require('./routes/stockReceipt.routes');
 const pdfRoutes = require('./routes/pdf.routes');
 const testRoutes = require('./routes/test.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const activityNotificationMiddleware = require('./middleware/activityNotification.middleware');
 
 // Import error handler
 const errorHandler = require('./middleware/errorHandler.middleware');
@@ -93,6 +94,9 @@ app.use('/api/auth', authLimiter);
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Automatic activity notifications for successful write operations.
+app.use(activityNotificationMiddleware);
 
 // Routes de santé
 app.get('/health', (req, res) => {

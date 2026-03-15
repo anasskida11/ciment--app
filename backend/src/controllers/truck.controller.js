@@ -133,6 +133,7 @@ const getAvailableTrucks = async (req, res, next) => {
     // Filter at database level: trucks with no active assignments
     const availableTrucks = await prisma.truck.findMany({
       where: {
+        isActive: true,
         assignments: {
           none: {
             status: {
@@ -187,7 +188,7 @@ const createTruck = async (req, res, next) => {
         model,
         year: year ? parseInt(year) : null,
         capacity: capacity ? parseFloat(capacity) : null,
-        isActive: false
+        isActive: true
       }
     });
 
@@ -219,6 +220,24 @@ const updateTruck = async (req, res, next) => {
         success: false,
         message: 'Truck non trouvé'
       });
+    }
+
+    if (isActive === false) {
+      const activeAssignmentsCount = await prisma.truckAssignment.count({
+        where: {
+          truckId: id,
+          status: {
+            in: ['ASSIGNED', 'CONFIRMED', 'IN_TRANSIT']
+          }
+        }
+      });
+
+      if (activeAssignmentsCount > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'لا يمكن أرشفة السيارة لأنها مرتبطة بطلب نشط'
+        });
+      }
     }
 
     const updateData = {};
@@ -402,11 +421,9 @@ const deleteTruck = async (req, res, next) => {
     const truck = await prisma.truck.findUnique({
       where: { id },
       include: {
-        assignments: {
-          where: {
-            status: {
-              in: ['ASSIGNED', 'CONFIRMED', 'IN_TRANSIT']
-            }
+        _count: {
+          select: {
+            assignments: true
           }
         }
       }
@@ -419,10 +436,10 @@ const deleteTruck = async (req, res, next) => {
       });
     }
 
-    if (truck.assignments.length > 0) {
+    if (truck._count.assignments > 0) {
       return res.status(400).json({
         success: false,
-        message: 'لا يمكن حذف السيارة لأنها مرتبطة بطلب نشط'
+        message: 'لا يمكن حذف السيارة لأنها مرتبطة بسجل تعيينات. يمكنك تعطيلها بدلاً من الحذف.'
       });
     }
 

@@ -6,22 +6,20 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { useProducts } from '@/features/products/hooks/use-products';
-import { formatCurrency } from '@/shared/utils/format';
+import { formatCurrency, formatNumber } from '@/shared/utils/format';
 
 interface ProductListProps {
   searchTerm: string;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onUpdateStock: (id: string, stock: number) => void;
 }
 
-export function ProductList({ searchTerm, onEdit, onDelete, onUpdateStock }: ProductListProps) {
-  const { products, updateProduct, loading } = useProducts();
+export function ProductList({ searchTerm, onEdit, onDelete }: ProductListProps) {
+  const { products, loading } = useProducts();
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -32,15 +30,6 @@ export function ProductList({ searchTerm, onEdit, onDelete, onUpdateStock }: Pro
     const minStock = typeof p.minStock === 'string' ? parseFloat(p.minStock) : p.minStock;
     return stock <= minStock;
   });
-
-  const handleStockChange = async (id: string, newStock: number) => {
-    try {
-      await updateProduct(id, { stock: Math.max(0, newStock) });
-      onUpdateStock(id, newStock);
-    } catch (error) {
-      // Error handled in hook
-    }
-  };
 
   if (loading) {
     return <div className="text-center py-8">جاري التحميل...</div>;
@@ -82,15 +71,10 @@ export function ProductList({ searchTerm, onEdit, onDelete, onUpdateStock }: Pro
                       <TableCell className="font-semibold align-middle truncate text-right">{product.name}</TableCell>
                       <TableCell className="text-right align-middle whitespace-nowrap">{formatCurrency(product.price)}</TableCell>
                       <TableCell className="align-middle">
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={stock}
-                            onChange={(e) => handleStockChange(product.id, Number.parseFloat(e.target.value) || 0)}
-                            className="w-20 text-center"
-                            min="0"
-                          />
-                          <span className="text-sm text-muted-foreground">وحدة</span>
+                        <div className="w-full text-right">
+                          <span className="font-medium inline-block" dir="ltr">
+                            {formatNumber(stock)} كغ
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="align-middle text-right">{minStock}</TableCell>

@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Loader2, Receipt, XCircle, ChevronDown } from 'lucide-react';
 import { useOrders } from '../hooks/use-orders';
 import type { Order } from '../types';
+import { formatQuantityWithKg } from '@/shared/utils/format';
 
 const statusLabels: Record<string, string> = {
   PENDING: 'قيد الانتظار',
@@ -116,7 +117,7 @@ function ExpandableOrderRow({
                       {order.items.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="text-right">{item.product?.name || 'منتج محذوف'}</TableCell>
-                          <TableCell className="text-right">{item.quantity}</TableCell>
+                          <TableCell className="text-right">{formatQuantityWithKg(item.quantity, item.product?.unit || 'tonne')}</TableCell>
                           <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.unitPrice)}</TableCell>
                           <TableCell className="font-semibold text-right whitespace-nowrap">{formatCurrency(item.subtotal)}</TableCell>
                         </TableRow>
@@ -147,7 +148,7 @@ function ExpandableOrderRow({
                         {order.truckAssignments.map((a) => (
                           <TableRow key={a.id}>
                             <TableCell className="text-right">{a.truck?.matricule || '-'}</TableCell>
-                            <TableCell className="text-right">{a.quantity} طن</TableCell>
+                            <TableCell className="text-right">{formatQuantityWithKg(a.quantity, 'tonne')}</TableCell>
                             <TableCell className="text-right">{a.driverName || '-'}</TableCell>
                             <TableCell className="text-right">{a.deliveryCost != null ? `${Number(a.deliveryCost).toLocaleString()} أ.م` : '-'}</TableCell>
                             <TableCell className="text-right">
@@ -186,6 +187,9 @@ export function OrdersList() {
   };
 
   const handleConfirm = async (orderId: string) => {
+    const confirmed = window.confirm('هل أنت متأكد من تأكيد هذا الطلب؟');
+    if (!confirmed) return;
+
     setConfirmingId(orderId);
     try {
       await confirmOrder(orderId);
@@ -198,6 +202,9 @@ export function OrdersList() {
   };
 
   const handleReject = async (orderId: string) => {
+    const confirmed = window.confirm('هل أنت متأكد من رفض هذا الطلب؟');
+    if (!confirmed) return;
+
     setRejectingId(orderId);
     try {
       await rejectOrder(orderId);

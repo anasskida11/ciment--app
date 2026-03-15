@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma.util');
 const PDFDocument = require('pdfkit');
+const { createNotification } = require('../services/notification.service');
 
 /**
  * Génère un numéro de commande unique (CMD-YYMMDD-XXXX)
@@ -179,6 +180,12 @@ const getOrderReceiptPdf = async (req, res, next) => {
       return `${num.toFixed(2)}`;
     };
 
+    const formatQuantityWithKg = (quantity, unit = 'tonne') => {
+      const num = typeof quantity === 'string' ? parseFloat(quantity) : Number(quantity || 0);
+      if (!Number.isFinite(num)) return '0 kg';
+      return `${num.toLocaleString('en-US')} kg`;
+    };
+
     const company = {
       name: process.env.COMPANY_NAME || 'Ciment App',
       address: process.env.COMPANY_ADDRESS || '',
@@ -218,7 +225,7 @@ const getOrderReceiptPdf = async (req, res, next) => {
     order.items.forEach((item) => {
       const name = item.product?.name || 'Unknown';
       doc.text(name, 50, y, { width: 220 });
-      doc.text(String(item.quantity), 280, y, { width: 60, align: 'right' });
+      doc.text(formatQuantityWithKg(item.quantity, item.product?.unit || 'tonne'), 240, y, { width: 130, align: 'right' });
       doc.text(formatMoney(item.unitPrice), 350, y, { width: 80, align: 'right' });
       doc.text(formatMoney(item.subtotal), 440, y, { width: 100, align: 'right' });
       y = doc.y + 6;
@@ -357,6 +364,14 @@ const createOrder = async (req, res, next) => {
       }
     });
 
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'طلب جديد',
+      `تم إنشاء الطلب #${order.orderNumber} للعميل ${order.client?.name || 'غير محدد'}`,
+      order.id
+    );
+
     res.status(201).json({
       success: true,
       message: 'Commande créée avec succès',
@@ -458,6 +473,14 @@ const confirmOrder = async (req, res, next) => {
       }
     });
 
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'تأكيد طلب',
+      `تم تأكيد الطلب #${updatedOrder.orderNumber}`,
+      updatedOrder.id
+    );
+
     res.status(200).json({
       success: true,
       message: 'Commande confirmée et stock décrémenté avec succès',
@@ -515,6 +538,14 @@ const updateOrder = async (req, res, next) => {
       }
     });
 
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'تعديل طلب',
+      `تم تعديل الطلب #${order.orderNumber}${status ? ` (الحالة: ${status})` : ''}`,
+      order.id
+    );
+
     res.status(200).json({
       success: true,
       message: 'Commande mise à jour avec succès',
@@ -549,6 +580,14 @@ const deleteOrder = async (req, res, next) => {
     await prisma.order.delete({
       where: { id }
     });
+
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'حذف طلب',
+      `تم حذف الطلب #${existingOrder.orderNumber || id}`,
+      null
+    );
 
     res.status(200).json({
       success: true,
@@ -625,6 +664,14 @@ const markAsDelivered = async (req, res, next) => {
         }
       }
     });
+
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'تسليم طلب',
+      `تم تسليم الطلب #${updatedOrder.orderNumber}`,
+      updatedOrder.id
+    );
 
     res.status(200).json({
       success: true,

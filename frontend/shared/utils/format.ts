@@ -46,3 +46,12 @@ export const formatNumber = (value: number): string => {
     numberingSystem: 'latn',
   }).format(value);
 };
+
+export const formatQuantityWithKg = (
+  quantity: number | string | null | undefined,
+  unit: string = 'tonne'
+): string => {
+  const parsed = typeof quantity === 'string' ? parseFloat(quantity) : (quantity ?? 0);
+  const safeValue = Number.isFinite(parsed) ? parsed : 0;
+  return `${formatNumber(safeValue)} كغ`;
+};

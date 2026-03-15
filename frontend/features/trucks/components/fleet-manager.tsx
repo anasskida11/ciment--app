@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
-import { formatNumber } from '@/shared/utils/format';
+import { formatNumber, formatQuantityWithKg } from '@/shared/utils/format';
 import { TruckList } from './truck-list';
 import { TruckForm } from './truck-form';
 import { useTrucks } from '../hooks/use-trucks';
@@ -22,7 +22,7 @@ import { useClients } from '@/features/clients/hooks/use-clients';
 import type { Truck } from '../types';
 
 export function FleetManager() {
-  const { trucks, availableTrucks, loading, deleteTruck, refetchAvailable, refetch: refetchTrucks } = useTrucks();
+  const { trucks, availableTrucks, loading, deleteTruck, updateTruck, refetchAvailable, refetch: refetchTrucks } = useTrucks();
   const { orders, refetch: refetchOrders, markAsDelivered } = useOrders();
   const { clients } = useClients();
   const { assignments, fetchByOrderId, createAssignment, completeAssignment, deleteAssignment } = useTruckAssignments();
@@ -47,10 +47,33 @@ export function FleetManager() {
 
   const handleDelete = async (id: string) => {
     try {
+      const confirmed = window.confirm('هل أنت متأكد من حذف هذه السيارة؟');
+      if (!confirmed) {
+        return;
+      }
+
       await deleteTruck(id);
     } catch (error) {
       // Error handled in hook
     }
+  };
+
+  const handleToggleArchive = async (truck: Truck) => {
+    const nextIsActive = !truck.isActive;
+    const confirmed = window.confirm(
+      nextIsActive
+        ? 'هل تريد إلغاء أرشفة هذه السيارة؟'
+        : 'هل تريد أرشفة هذه السيارة؟'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await updateTruck(truck.id, { isActive: nextIsActive });
+    await refetchOrders(false);
+    await refetchAvailable(false);
+    await refetchTrucks(false);
   };
 
   const handleCloseForm = () => {
@@ -92,8 +115,9 @@ export function FleetManager() {
 
   const handleAssignTruck = async () => {
     if (!selectedOrderId || !selectedTruckId || !assignQuantity) return;
-    const qty = Number(assignQuantity);
-    if (!Number.isFinite(qty) || qty <= 0) return;
+    const qtyKg = Number(assignQuantity);
+    if (!Number.isFinite(qtyKg) || qtyKg <= 0) return;
+    const qty = qtyKg;
 
     await createAssignment({
       orderId: selectedOrderId,
@@ -165,6 +189,12 @@ export function FleetManager() {
       truck.assignments?.some((a) => orderClientMap.get(a.orderId) === clientFilter);
 
     return matchesSearch && matchesStatus && matchesOrder && matchesClient;
+  }).sort((a, b) => {
+    if (a.isActive === b.isActive) {
+      return 0;
+    }
+
+    return a.isActive ? -1 : 1;
   });
 
   const availableCount = availableTrucks.length;
@@ -214,7 +244,7 @@ export function FleetManager() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {formatNumber(trucks.reduce((sum, t) => sum + (t.capacity || 0), 0))} طن
+              {formatQuantityWithKg(trucks.reduce((sum, t) => sum + (t.capacity || 0), 0), 'tonne')}
             </div>
           </CardContent>
         </Card>
@@ -341,15 +371,15 @@ export function FleetManager() {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-md border p-2">
                     <div className="text-xs text-muted-foreground">الكمية</div>
-                    <div className="text-lg font-semibold">{orderTotalQuantity}</div>
+                    <div className="text-lg font-semibold">{formatQuantityWithKg(orderTotalQuantity, 'tonne')}</div>
                   </div>
                   <div className="rounded-md border p-2">
                     <div className="text-xs text-muted-foreground">الموزع</div>
-                    <div className="text-lg font-semibold">{assignedQuantity}</div>
+                    <div className="text-lg font-semibold">{formatQuantityWithKg(assignedQuantity, 'tonne')}</div>
                   </div>
                   <div className="rounded-md border p-2">
                     <div className="text-xs text-muted-foreground">المتبقي</div>
-                    <div className="text-lg font-semibold">{remainingQuantity}</div>
+                    <div className="text-lg font-semibold">{formatQuantityWithKg(remainingQuantity, 'tonne')}</div>
                   </div>
                 </div>
               </div>
@@ -371,7 +401,7 @@ export function FleetManager() {
                           ) : (
                             availableTrucks.map((truck) => (
                               <SelectItem key={truck.id} value={truck.id}>
-                                {truck.matricule} ({truck.capacity || 0} طن)
+                                {truck.matricule} ({formatQuantityWithKg(truck.capacity || 0, 'tonne')})
                               </SelectItem>
                             ))
                           )}
@@ -380,14 +410,14 @@ export function FleetManager() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>الكمية (طن)</Label>
+                      <Label>الكمية (كغ)</Label>
                       <Input
                         type="number"
                         min="0"
-                        step="0.1"
+                        step="1"
                         value={assignQuantity}
                         onChange={(e) => setAssignQuantity(e.target.value)}
-                        placeholder="مثال: 10"
+                        placeholder="مثال: 10000"
                       />
                     </div>
 
@@ -423,7 +453,7 @@ export function FleetManager() {
                       assignments.map((assignment) => (
                         <div key={assignment.id} className="grid grid-cols-4 gap-2 border-b p-3 text-sm">
                           <div>{assignment.truck?.matricule || assignment.truckId}</div>
-                          <div>{assignment.quantity}</div>
+                          <div>{formatQuantityWithKg(assignment.quantity, 'tonne')}</div>
                           <div>{assignment.driverName || '-'}</div>
                           <div className="flex gap-2">
                             {assignment.status !== 'DELIVERED' && (
@@ -468,6 +498,7 @@ export function FleetManager() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onReleaseTruck={openCompleteDialog}
+        onToggleArchive={handleToggleArchive}
       />
 
       {/* Truck Form Dialog */}

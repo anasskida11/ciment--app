@@ -141,6 +141,12 @@ class PDFService {
     return y + 26;
   }
 
+  formatQuantityWithKg(quantity, unit = 'tonne') {
+    const num = typeof quantity === 'string' ? parseFloat(quantity) : Number(quantity || 0);
+    if (!Number.isFinite(num)) return '0 kg';
+    return `${num.toLocaleString('en-US')} kg`;
+  }
+
   /**
    * Génère un PDF de facture
    */
@@ -410,7 +416,7 @@ class PDFService {
           // سعر الوحدة
           doc.text(fmtCurrency(item.unitPrice), colX[1] + 4, textY, { width: colW[1] - 8, align: 'center' });
           // الكمية
-          doc.text(item.quantity.toString(), colX[2] + 4, textY, { width: colW[2] - 8, align: 'center' });
+          doc.text(this.formatQuantityWithKg(item.quantity, item.product?.unit || 'tonne'), colX[2] + 4, textY, { width: colW[2] - 8, align: 'center' });
           // المنتج
           doc.fontSize(9).font(isArProduct ? fontR : 'Helvetica')
             .text(isArProduct ? ar(productName) : productName, colX[3] + 6, textY, {
@@ -632,7 +638,7 @@ class PDFService {
       doc.font('Helvetica')
          .fontSize(9)
          .text(item.product?.name || 'Produit', 50, y, { width: 200 })
-         .text(item.quantity.toString(), 250, y)
+        .text(this.formatQuantityWithKg(item.quantity, item.product?.unit || 'tonne'), 250, y, { width: 95 })
          .text(`${item.unitPrice} MRU`, 300, y)
          .text(`${item.subtotal} MRU`, 400, y, { align: 'right' });
 

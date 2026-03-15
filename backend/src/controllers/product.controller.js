@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma.util');
+const { createNotification } = require('../services/notification.service');
 
 /**
  * Récupère tous les produits
@@ -119,11 +120,24 @@ const updateProduct = async (req, res, next) => {
     if (minStock !== undefined) updateData.minStock = parseFloat(minStock);
     if (typeof isActive === 'boolean') updateData.isActive = isActive;
 
+    const previousStock = parseFloat(existingProduct.stock);
+    const nextStock = stock !== undefined ? parseFloat(stock) : previousStock;
+    const stockChanged = stock !== undefined && nextStock !== previousStock;
+
     // Mise à jour
     const product = await prisma.product.update({
       where: { id },
       data: updateData
     });
+
+    if (stockChanged && req.user?.id) {
+      await createNotification(
+        req.user.id,
+        'GENERAL',
+        'تعديل المخزون الحالي',
+        `تم تعديل المخزون الحالي للمنتج ${product.name} من ${previousStock} إلى ${nextStock}`
+      );
+    }
 
     res.status(200).json({
       success: true,

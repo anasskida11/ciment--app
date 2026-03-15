@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   BarChart,
   Bar,
@@ -36,6 +37,7 @@ import { orderService } from "@/features/orders/services/order.service"
 import { productService } from "@/features/products/services/product.service"
 import { accountService } from "@/features/accounts/services/account.service"
 import { notificationService, type Notification } from "@/lib/notification.service"
+import { formatDateTime } from "@/shared/utils/format"
 import type { Order } from "@/features/orders/types"
 import type { Product } from "@/features/products/types"
 import type { Account } from "@/features/accounts/types"
@@ -78,6 +80,7 @@ export function AdminDashboard() {
   const [products, setProducts] = useState<DashboardProduct[]>([])
   const [accounts, setAccounts] = useState<DashboardAccount[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [viewMode, setViewMode] = useState<"grid" | "focused">("grid")
 
   const [filterType, setFilterType] = useState("all")
@@ -86,6 +89,15 @@ export function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const notificationsData = await notificationService.getAll()
+        setNotifications(notificationsData)
+      } catch (error) {
+        // Keep dashboard usable even if notification fetch fails.
+      }
+    }
+
     const loadDashboardData = async () => {
       try {
         const [ordersData, productsData, accountsData, notificationsData] = await Promise.all([
@@ -124,7 +136,12 @@ export function AdminDashboard() {
     }
 
     loadDashboardData()
+
+    const interval = setInterval(loadNotifications, 15000)
+    return () => clearInterval(interval)
   }, [])
+
+  const unreadNotifications = notifications.filter((n) => !n.isRead)
 
   const getFilteredOrders = () => {
     const today = new Date()
@@ -253,8 +270,88 @@ interface KPICardProps {
             </Button>
           </div>
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">لوحة التحكم</h1>
-            <p className="text-slate-600 text-sm">نظام إدارة الشركة المتقدم</p>
+            <div className="flex items-center gap-3 justify-end">
+              <Popover open={isNotifOpen} onOpenChange={setIsNotifOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {unreadNotifications.length > 0 && (
+                      <span className="absolute -top-1 -left-1 bg-red-500 text-white text-[10px] rounded-full min-w-5 h-5 px-1 flex items-center justify-center font-bold">
+                        {unreadNotifications.length > 99 ? '99+' : unreadNotifications.length}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96 p-0" align="start">
+                  <div className="border-b px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {unreadNotifications.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            await notificationService.markAllAsRead()
+                            setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+                          }}
+                        >
+                          <CheckCheck className="h-4 w-4 ml-1" />
+                          قراءة الكل
+                        </Button>
+                      )}
+                    </div>
+                    <p className="font-semibold text-sm">الإشعارات</p>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto p-2">
+                    {notifications.length === 0 && (
+                      <p className="text-sm text-slate-500 text-center py-6">لا توجد إشعارات حالياً</p>
+                    )}
+                    <div className="space-y-2">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`flex items-start justify-between p-3 rounded-lg border transition-colors ${
+                            notification.isRead
+                              ? "bg-white border-slate-200"
+                              : "bg-amber-100 border-amber-300"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1">
+                            {!notification.isRead && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-amber-600 hover:text-green-600"
+                                onClick={async () => {
+                                  await notificationService.markAsRead(notification.id)
+                                  setNotifications((prev) =>
+                                    prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+                                  )
+                                }}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="flex-1 text-right">
+                            <p className={`text-sm ${notification.isRead ? "text-slate-600" : "font-semibold text-slate-900"}`}>
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">{notification.message}</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              {formatDateTime(notification.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">لوحة التحكم</h1>
+                <p className="text-slate-600 text-sm">نظام إدارة الشركة المتقدم</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -267,88 +364,6 @@ interface KPICardProps {
             className="w-full px-4 py-2 border border-slate-300 rounded-lg text-right placeholder-slate-400"
           />
         </div>
-
-        {/* Notifications Panel */}
-        {notifications.length > 0 && (
-          <Card className="mb-8 border-amber-200 bg-amber-50/50">
-            <CardHeader className="text-right pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2">
-                  {notifications.some(n => !n.isRead) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-amber-700 hover:text-amber-900"
-                      onClick={async () => {
-                        await notificationService.markAllAsRead()
-                        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
-                      }}
-                    >
-                      <CheckCheck className="h-4 w-4 ml-1" />
-                      قراءة الكل
-                    </Button>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-amber-800">الإشعارات</CardTitle>
-                  <Bell className="h-5 w-5 text-amber-600" />
-                  {notifications.filter(n => !n.isRead).length > 0 && (
-                    <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">
-                      {notifications.filter(n => !n.isRead).length}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`flex items-start justify-between p-3 rounded-lg border transition-colors ${
-                      notification.isRead
-                        ? "bg-white border-slate-200"
-                        : "bg-amber-100 border-amber-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      {!notification.isRead && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-amber-600 hover:text-green-600"
-                          onClick={async () => {
-                            await notificationService.markAsRead(notification.id)
-                            setNotifications(prev =>
-                              prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
-                            )
-                          }}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="flex-1 text-right">
-                      <p className={`text-sm ${notification.isRead ? "text-slate-600" : "font-semibold text-slate-900"}`}>
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">{notification.message}</p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        {new Date(notification.createdAt).toLocaleDateString("ar-SA", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Date Filter Card */}
         <Card className="mb-8 bg-white border-slate-200">

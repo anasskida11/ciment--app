@@ -10,13 +10,12 @@ const prisma = require('../utils/prisma.util');
 /**
  * Crée une notification et l'envoie à l'administrateur
  */
-const createNotification = async (userId, type, title, message, orderId = null) => {
+const createNotification = async (userId, type, title, message) => {
   try {
     // Créer la notification pour l'utilisateur
     const notification = await prisma.notification.create({
       data: {
         userId,
-        orderId,
         type,
         title,
         message
@@ -40,10 +39,9 @@ const createNotification = async (userId, type, title, message, orderId = null) 
         await prisma.notification.create({
           data: {
             userId: admin.id,
-            orderId,
             type,
-            title: `[${user.firstName} ${user.lastName}] ${title}`,
-            message
+            title: `[${user.firstName} ${user.lastName} | ${user.email}] ${title}`,
+            message: `${message} (Compte: ${user.email})`
           }
         });
       }

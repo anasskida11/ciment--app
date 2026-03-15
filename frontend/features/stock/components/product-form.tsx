@@ -66,6 +66,15 @@ export function ProductForm({ isOpen, onClose, editingProduct }: ProductFormProp
   const handleSubmit = async (data: ProductFormData) => {
     try {
       if (editingProduct) {
+        const oldStock = Number(editingProduct.stock || 0);
+        const newStock = Number(data.stock || 0);
+        if (oldStock !== newStock) {
+          const confirmed = window.confirm('هل أنت متأكد من تعديل المخزون الحالي؟');
+          if (!confirmed) {
+            return;
+          }
+        }
+
         await updateProduct(editingProduct.id, data);
       } else {
         await createProduct(data);

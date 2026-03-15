@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma.util');
+const { createNotification } = require('../services/notification.service');
 
 /**
  * Génère un numéro de bon de demande unique
@@ -147,6 +148,14 @@ const createStockRequest = async (req, res, next) => {
       }
     });
 
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'طلب مخزون جديد',
+      `تم إنشاء طلب مخزون #${stockRequest.requestNumber} للطلب #${stockRequest.order?.orderNumber || orderId}`,
+      stockRequest.orderId
+    );
+
     res.status(201).json({
       success: true,
       message: 'Bon de demande créé avec succès',
@@ -206,6 +215,14 @@ const receiveStockRequest = async (req, res, next) => {
         }
       }
     });
+
+    await createNotification(
+      req.user.id,
+      'GENERAL',
+      'استلام طلب مخزون',
+      `تم استلام طلب المخزون #${updated.requestNumber}`,
+      updated.orderId || null
+    );
 
     res.status(200).json({
       success: true,
